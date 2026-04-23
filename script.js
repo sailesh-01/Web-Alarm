@@ -1,9 +1,11 @@
 // System Nav Elements
 const navClock = document.getElementById('nav-clock');
+const navWorldClock = document.getElementById('nav-worldclock');
 const navAlarms = document.getElementById('nav-alarms');
 const navTimer = document.getElementById('nav-timer');
 
 const viewClock = document.getElementById('view-clock');
+const viewWorldClock = document.getElementById('view-worldclock');
 const viewAlarms = document.getElementById('view-alarms');
 const viewTimer = document.getElementById('view-timer');
 
@@ -11,6 +13,12 @@ const viewTimer = document.getElementById('view-timer');
 const timeDisplay = document.getElementById('time');
 const ampmDisplay = document.getElementById('ampm');
 const dateDisplay = document.getElementById('date');
+
+// DOM Elements: World Clock
+const btnAddWorldClock = document.getElementById('btn-add-worldclock');
+const worldClockTimezoneInput = document.getElementById('worldclock-timezone');
+const worldClockListContainer = document.getElementById('worldclock-list-container');
+const worldClockCountTxt = document.getElementById('worldclock-count');
 
 // DOM Elements: Alarms
 const hourInput = document.getElementById('alarm-hour');
@@ -47,6 +55,7 @@ const alarmSound = document.getElementById('alarm-sound');
 
 // App States
 let alarms = JSON.parse(localStorage.getItem('alarms')) || [];
+let worldClocks = JSON.parse(localStorage.getItem('worldClocks')) || [];
 let activeRingingAlarmId = null;
 let selectedPeriod = 'AM';
 
@@ -61,34 +70,40 @@ function init() {
   setInterval(updateClock, 1000);
   updateClock();
   renderAlarms();
+  renderWorldClocks();
   setupNavigation();
 }
 
 // -------------- NAVIGATION --------------
 function setupNavigation() {
   navClock.addEventListener('click', () => switchTab('clock', navClock, viewClock));
+  navWorldClock.addEventListener('click', () => switchTab('worldclock', navWorldClock, viewWorldClock));
   navAlarms.addEventListener('click', () => switchTab('alarms', navAlarms, viewAlarms));
   navTimer.addEventListener('click', () => switchTab('timer', navTimer, viewTimer));
 }
 
 function switchTab(tab, navBtn, viewBlock) {
   // Reset all nav styles
-  [navClock, navAlarms, navTimer].forEach(btn => {
+  [navClock, navWorldClock, navAlarms, navTimer].forEach(btn => {
     btn.className = 'nav-btn flex-1 flex flex-col items-center justify-center text-[#f0dfff]/60 py-2 hover:text-[#f0dfff] transition-all active:scale-95 duration-300 rounded-full';
-    btn.querySelector('span:nth-child(2)').classList.remove('font-bold');
+    const nameEl = btn.querySelector('span:nth-child(2)');
+    if (nameEl) nameEl.classList.remove('font-bold');
+    const icEl = btn.querySelector('span:nth-child(1)');
+    if (icEl) icEl.style.fontVariationSettings = '';
   });
 
   // Activate clicked nav element
   navBtn.className = 'nav-btn flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-[#b6a0ff] to-[#7c4dff] text-[#15052a] rounded-full py-2 shadow-lg shadow-[#7c4dff]/20 active:scale-95 transition-all duration-300 ease-out';
-  navBtn.querySelector('span:nth-child(2)').classList.add('font-bold');
+  const activeNameEl = navBtn.querySelector('span:nth-child(2)');
+  if (activeNameEl) activeNameEl.classList.add('font-bold');
+  const activeIcEl = navBtn.querySelector('span:nth-child(1)');
+  if (activeIcEl) activeIcEl.style.fontVariationSettings = "'FILL' 1";
 
   // Hide all sections
-  viewClock.classList.add('hidden');
-  viewClock.classList.remove('flex');
-  viewAlarms.classList.add('hidden');
-  viewAlarms.classList.remove('flex');
-  viewTimer.classList.add('hidden');
-  viewTimer.classList.remove('flex');
+  [viewClock, viewWorldClock, viewAlarms, viewTimer].forEach(view => {
+    view.classList.add('hidden');
+    view.classList.remove('flex');
+  });
 
   // Reveal requested block
   viewBlock.classList.remove('hidden');
@@ -114,7 +129,7 @@ btnPm.addEventListener('click', () => {
 
 function updateClock() {
   const now = new Date();
-  
+
   const options = { weekday: 'long', month: 'long', day: 'numeric' };
   dateDisplay.textContent = now.toLocaleDateString('en-US', options).toUpperCase();
 
@@ -133,9 +148,48 @@ function updateClock() {
   ampmDisplay.textContent = ampm;
 
   // Trigger precisely at the minute mark
-  if(seconds === 0) {
+  if (seconds === 0) {
     checkAlarms(`${formattedHours}:${formattedMinutes}`, ampm);
   }
+
+  updateWorldClocksDisplay();
+}
+
+function updateWorldClocksDisplay() {
+  const now = new Date();
+  if (worldClocks.length === 0) return;
+
+  const dates = document.querySelectorAll('.wc-date');
+  const times = document.querySelectorAll('.wc-time');
+  const ampms = document.querySelectorAll('.wc-ampm');
+
+  dates.forEach(el => {
+    const tz = el.getAttribute('data-tz');
+    try {
+      const options = { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' };
+      el.textContent = now.toLocaleDateString('en-US', options);
+    } catch (e) { }
+  });
+
+  times.forEach(el => {
+    const tz = el.getAttribute('data-tz');
+    try {
+      const options = { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true };
+      const timeString = now.toLocaleTimeString('en-US', options);
+      const time = timeString.split(' ')[0];
+      el.textContent = time;
+    } catch (e) { }
+  });
+
+  ampms.forEach(el => {
+    const tz = el.getAttribute('data-tz');
+    try {
+      const options = { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true };
+      const timeString = now.toLocaleTimeString('en-US', options);
+      const ampm = timeString.split(' ')[1] || '';
+      el.textContent = ampm.toUpperCase();
+    } catch (e) { }
+  });
 }
 
 function checkAlarms(currentTimeString, currentAMPM) {
@@ -150,8 +204,8 @@ function triggerAlarm(alarm, customTitle) {
   activeRingingAlarmId = alarm ? alarm.id : 'timer';
   ringingTitle.textContent = customTitle || 'Wake up!';
   ringingTimeTxt.textContent = alarm ? `${alarm.time} ${alarm.ampm}` : 'Time is up!';
-  
-  if(!alarm) {
+
+  if (!alarm) {
     // If it's a timer trigger, hide the snooze button
     btnSnooze.style.display = 'none';
   } else {
@@ -160,7 +214,7 @@ function triggerAlarm(alarm, customTitle) {
 
   ringingOverlay.classList.add('active');
   alarmSound.currentTime = 0;
-  
+
   let playPromise = alarmSound.play();
   if (playPromise !== undefined) {
     playPromise.catch(error => console.log("Autoplay prevented:", error));
@@ -171,7 +225,7 @@ function stopAlarm() {
   ringingOverlay.classList.remove('active');
   alarmSound.pause();
   alarmSound.currentTime = 0;
-  
+
   if (activeRingingAlarmId && activeRingingAlarmId !== 'timer') {
     alarms = alarms.map(alarm => {
       if (alarm.id === activeRingingAlarmId) {
@@ -203,7 +257,7 @@ function snoozeAlarm() {
     }
 
     const newTimeString = `${hh.toString().padStart(2, '0')}:${mm.toString().padStart(2, '0')}`;
-    
+
     alarms.push({
       id: Date.now().toString(),
       time: newTimeString,
@@ -215,7 +269,7 @@ function snoozeAlarm() {
     saveAlarms();
     renderAlarms();
   }
-  stopAlarm(); 
+  stopAlarm();
 }
 
 btnSetAlarm.addEventListener('click', () => {
@@ -227,7 +281,7 @@ btnSetAlarm.addEventListener('click', () => {
   if (m < 0 || m > 59) { alert("Minute must be between 0 and 59"); return; }
 
   const timeString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-  
+
   if (alarms.some(a => a.time === timeString && a.ampm === selectedPeriod)) {
     alert("This alarm is already set.");
     return;
@@ -280,18 +334,79 @@ function renderAlarms() {
   });
 }
 
-window.toggleActive = function(id) {
+window.toggleActive = function (id) {
   alarms = alarms.map(a => a.id === id ? { ...a, isActive: !a.isActive } : a);
   saveAlarms(); renderAlarms();
 }
 
-window.deleteAlarm = function(id) {
+window.deleteAlarm = function (id) {
   alarms = alarms.filter(a => a.id !== id);
   saveAlarms(); renderAlarms();
 }
 
 function saveAlarms() {
   localStorage.setItem('alarms', JSON.stringify(alarms));
+}
+
+// -------------- WORLD CLOCK LOGIC --------------
+btnAddWorldClock.addEventListener('click', () => {
+  const tz = worldClockTimezoneInput.value;
+  const opt = worldClockTimezoneInput.options[worldClockTimezoneInput.selectedIndex];
+  const label = opt.text.split(' (')[0];
+
+  if (worldClocks.some(wc => wc.timezone === tz)) {
+    alert("City already added.");
+    return;
+  }
+
+  worldClocks.push({ id: Date.now().toString(), timezone: tz, label: label });
+  saveWorldClocks();
+  renderWorldClocks();
+});
+
+function saveWorldClocks() {
+  localStorage.setItem('worldClocks', JSON.stringify(worldClocks));
+}
+
+function renderWorldClocks() {
+  worldClockListContainer.innerHTML = '';
+  worldClockCountTxt.textContent = `${worldClocks.length} ADDED`;
+
+  if (worldClocks.length === 0) {
+    worldClockListContainer.innerHTML = '<p class="text-on-surface-variant font-body py-4 text-center">No world clocks added. Use the tool above to add some.</p>';
+    return;
+  }
+
+  worldClocks.forEach((wc) => {
+    const div = document.createElement('div');
+    div.className = `group bg-surface-container rounded-lg p-6 flex items-center justify-between hover:bg-secondary-container transition-all border border-outline-variant/10 cursor-pointer`;
+    div.innerHTML = `
+      <div class="flex flex-col flex-1">
+        <h4 class="text-lg font-headline font-semibold text-on-surface">${wc.label}</h4>
+        <span class="text-xs font-label text-on-surface-variant mt-1 wc-date" data-tz="${wc.timezone}">--</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex flex-col items-end mr-2">
+          <div class="flex items-baseline gap-1">
+            <span class="text-3xl font-display font-bold text-on-surface wc-time" data-tz="${wc.timezone}">--:--</span>
+            <span class="text-xs font-label text-on-surface-variant uppercase wc-ampm" data-tz="${wc.timezone}">--</span>
+          </div>
+        </div>
+        <button onclick="deleteWorldClock('${wc.id}')" class="p-2 rounded-full text-error opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error-container/20">
+          <span class="material-symbols-outlined" data-icon="delete">delete</span>
+        </button>
+      </div>
+    `;
+    worldClockListContainer.appendChild(div);
+  });
+
+  updateWorldClocksDisplay();
+}
+
+window.deleteWorldClock = function (id) {
+  worldClocks = worldClocks.filter(wc => wc.id !== id);
+  saveWorldClocks();
+  renderWorldClocks();
 }
 
 // -------------- TIMER LOGIC --------------
@@ -311,7 +426,7 @@ function startTimer() {
     let m = parseInt(timerMinInput.value) || 0;
     let s = parseInt(timerSecInput.value) || 0;
     timerTotalSeconds = (m * 60) + s;
-    if(timerTotalSeconds <= 0) return; // Cannot start 0 timer
+    if (timerTotalSeconds <= 0) return; // Cannot start 0 timer
   }
 
   isTimerRunning = true;
@@ -328,7 +443,7 @@ function startTimer() {
 
   timerInterval = setInterval(() => {
     timerTotalSeconds--;
-    if(timerTotalSeconds <= 0) {
+    if (timerTotalSeconds <= 0) {
       clearInterval(timerInterval);
       timerTotalSeconds = 0;
       isTimerRunning = false;
@@ -352,7 +467,7 @@ function resetTimer() {
   clearInterval(timerInterval);
   isTimerRunning = false;
   timerTotalSeconds = 0;
-  
+
   timerRunning.classList.add('hidden');
   timerRunning.classList.remove('flex');
   timerSetup.classList.add('flex');

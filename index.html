@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html class="dark" lang="en">
+
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
   <title>Temporal Sanctuary - Digital Clock</title>
-  
+
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+
   <!-- Tailwind Configuration from Stitch -->
   <script id="tailwind-config">
     tailwind.config = {
@@ -84,226 +88,369 @@
       },
     }
   </script>
-  
+
   <style>
     .material-symbols-outlined {
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
+
     body {
-        font-family: 'Inter', sans-serif;
-        background-color: #15052a;
-        color: #f0dfff;
-        min-height: max(884px, 100dvh);
-        transition: background-color 0.3s ease, color 0.3s ease;
+      font-family: 'Inter', sans-serif;
+      background-color: #15052a;
+      color: #f0dfff;
+      min-height: max(884px, 100dvh);
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
-    
+
     html.light body {
-        background-color: #f0f4f8;
-        color: #1e293b;
+      background-color: #f0f4f8;
+      color: #1e293b;
     }
-    html.light .bg-[#15052a]\/90 { background-color: rgba(240, 244, 248, 0.9); }
-    html.light .bg-[#1b0933]\/50 { background-color: rgba(203, 213, 225, 0.9); }
-    html.light .from-\[\#1b0933\] { --tw-gradient-from: #e2e8f0 var(--tw-gradient-from-position); }
-    
+
+    html.light .bg-\[\#15052a\]\/90 {
+      background-color: rgba(240, 244, 248, 0.9);
+    }
+
+    html.light .bg-\[\#1b0933\]\/50 {
+      background-color: rgba(203, 213, 225, 0.9);
+    }
+
+    html.light .from-\[\#1b0933\] {
+      --tw-gradient-from: #e2e8f0 var(--tw-gradient-from-position);
+    }
+
     html.light .active-btn {
-        background-color: #3b82f6 !important;
-        color: white !important;
+      background-color: #3b82f6 !important;
+      color: white !important;
     }
 
     #ringing-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
-      z-index: 9999; display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
     }
+
     #ringing-overlay.active {
-      opacity: 1; pointer-events: all;
+      opacity: 1;
+      pointer-events: all;
     }
   </style>
 
 </head>
-<body class="min-h-screen flex flex-col items-center selection:bg-primary-container selection:text-on-primary-container">
 
-<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#15052a]/90 backdrop-blur-md bg-gradient-to-b from-[#1b0933] to-transparent theme-header">
-  <div class="flex items-center gap-2">
-    <span class="material-symbols-outlined text-primary" data-icon="auto_awesome">auto_awesome</span>
-    <h1 class="font-headline text-2xl tracking-tight text-on-surface font-bold tracking-[-0.02em]">Temporal Sanctuary</h1>
-  </div>
-  <div class="flex items-center gap-4">
-    <button id="theme-toggle" class="p-2 rounded-full hover:bg-surface-variant transition-colors active:scale-95 duration-200">
-      <span class="material-symbols-outlined text-on-surface/60" id="theme-icon" data-icon="light_mode">light_mode</span>
-    </button>
-  </div>
-</header>
+<body
+  class="min-h-screen flex flex-col items-center selection:bg-primary-container selection:text-on-primary-container">
 
-<main class="flex-1 w-full max-w-4xl px-6 pt-32 pb-40 flex flex-col items-center w-full">
-  
-  <!-- VIEW: CLOCK -->
-  <div id="view-clock" class="w-full flex-col items-center flex animate-[slideIn_0.3s_ease]">
-    <section class="flex flex-col items-center mb-24 relative mt-16 w-full">
-      <div class="absolute -top-12 opacity-5 pointer-events-none select-none">
-        <span class="text-[12rem] font-display font-bold text-surface-tint tracking-tighter">TIME</span>
-      </div>
-      <div class="flex flex-col items-center z-10 w-full">
-        <div class="flex flex-col md:flex-row items-baseline gap-4 text-center justify-center">
-          <h2 id="time" class="text-7xl md:text-9xl font-display font-bold tracking-[-0.03em] text-on-surface drop-shadow-[0_0_40px_rgba(182,160,255,0.2)]">
-            00:00:00
-          </h2>
-          <span id="ampm" class="text-2xl font-label font-medium uppercase tracking-[0.2em] text-primary">AM</span>
-        </div>
-        <div class="mt-4 flex flex-col items-center">
-          <span id="date" class="text-xl font-label text-on-surface-variant font-medium">--</span>
-          <div class="h-1 w-24 bg-primary-container rounded-full mt-2 opacity-30"></div>
-        </div>
-      </div>
-    </section>
-  </div>
+  <header
+    class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#15052a]/90 backdrop-blur-md bg-gradient-to-b from-[#1b0933] to-transparent theme-header">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary" data-icon="auto_awesome">auto_awesome</span>
+      <h1 class="font-headline text-2xl tracking-tight text-on-surface font-bold tracking-[-0.02em]">Temporal Sanctuary
+      </h1>
+    </div>
+    <div class="flex items-center gap-4">
+      <button id="theme-toggle"
+        class="p-2 rounded-full hover:bg-surface-variant transition-colors active:scale-95 duration-200">
+        <span class="material-symbols-outlined text-on-surface/60" id="theme-icon"
+          data-icon="light_mode">light_mode</span>
+      </button>
+    </div>
+  </header>
 
-  <!-- VIEW: ALARMS -->
-  <div id="view-alarms" class="w-full flex-col items-center hidden animate-[slideIn_0.3s_ease]">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-      <!-- Add Alarm Card -->
-      <section class="bg-surface-container-low rounded-xl p-8 flex flex-col gap-8 shadow-inner border border-outline-variant/5">
-        <div class="flex items-center gap-3">
-          <span class="material-symbols-outlined text-tertiary" data-icon="alarm_add">alarm_add</span>
-          <h3 class="text-xl font-headline font-semibold">New Alarm</h3>
+  <main class="flex-1 w-full max-w-4xl px-6 pt-32 pb-40 flex flex-col items-center w-full">
+
+    <!-- VIEW: CLOCK -->
+    <div id="view-clock" class="w-full flex-col items-center flex animate-[slideIn_0.3s_ease]">
+      <section class="flex flex-col items-center mb-24 relative mt-16 w-full">
+        <div class="absolute -top-12 opacity-5 pointer-events-none select-none">
+          <span class="text-[12rem] font-display font-bold text-surface-tint tracking-tighter">TIME</span>
         </div>
-        <div class="flex flex-col gap-6">
-          <div class="flex items-center justify-center gap-4">
-            <div class="bg-surface-container-lowest rounded-lg p-4 w-24 flex flex-col items-center border border-outline-variant/10">
-              <span class="text-xs font-label text-on-surface-variant uppercase mb-1">Hours</span>
-              <input id="alarm-hour" class="bg-transparent border-none text-4xl font-display text-center w-full focus:ring-0 p-0 text-on-surface outline-none placeholder-surface-variant" type="number" min="1" max="12" placeholder="07"/>
-            </div>
-            <span class="text-4xl font-display text-outline-variant">:</span>
-            <div class="bg-surface-container-lowest rounded-lg p-4 w-24 flex flex-col items-center border border-outline-variant/10">
-              <span class="text-xs font-label text-on-surface-variant uppercase mb-1">Mins</span>
-              <input id="alarm-minute" class="bg-transparent border-none text-4xl font-display text-center w-full focus:ring-0 p-0 text-on-surface outline-none placeholder-surface-variant" type="number" min="0" max="59" placeholder="30"/>
-            </div>
-            <div class="flex flex-col gap-2">
-              <button id="btn-am" class="px-4 py-2 rounded-full bg-primary-container text-on-primary-container text-xs font-bold transition-all active-btn">AM</button>
-              <button id="btn-pm" class="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold transition-all">PM</button>
-            </div>
+        <div class="flex flex-col items-center z-10 w-full">
+          <div class="flex flex-col md:flex-row items-baseline gap-4 text-center justify-center">
+            <h2 id="time"
+              class="text-7xl md:text-9xl font-display font-bold tracking-[-0.03em] text-on-surface drop-shadow-[0_0_40px_rgba(182,160,255,0.2)]">
+              00:00:00
+            </h2>
+            <span id="ampm" class="text-2xl font-label font-medium uppercase tracking-[0.2em] text-primary">AM</span>
           </div>
-          
-          <button id="btn-set-alarm" class="w-full bg-gradient-to-br from-primary to-secondary-container text-on-primary py-4 rounded-full font-headline font-bold text-lg shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+          <div class="mt-4 flex flex-col items-center">
+            <span id="date" class="text-xl font-label text-on-surface-variant font-medium">--</span>
+            <div class="h-1 w-24 bg-primary-container rounded-full mt-2 opacity-30"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- VIEW: WORLD CLOCK -->
+    <div id="view-worldclock" class="w-full flex-col items-center hidden animate-[slideIn_0.3s_ease]">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+
+        <!-- Add City Card -->
+        <section
+          class="bg-surface-container-low rounded-xl p-8 flex flex-col gap-8 shadow-inner border border-outline-variant/5">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-tertiary" data-icon="language">language</span>
+            <h3 class="text-xl font-headline font-semibold">Add World Clock</h3>
+          </div>
+          <div class="flex flex-col gap-6">
+            <div class="relative w-full">
+              <select id="worldclock-timezone"
+                class="w-full appearance-none bg-surface-container border border-outline-variant/20 rounded-lg py-4 px-4 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer font-label text-base">
+                <optgroup label="Popular">
+                  <option value="America/New_York">New York (EST/EDT)</option>
+                  <option value="Europe/London">London (GMT/BST)</option>
+                  <option value="Europe/Paris">Paris (CET/CEST)</option>
+                  <option value="Asia/Dubai">Dubai (GST)</option>
+                  <option value="Asia/Tokyo">Tokyo (JST)</option>
+                  <option value="Australia/Sydney">Sydney (AEST/AEDT)</option>
+                </optgroup>
+                <optgroup label="Other">
+                  <option value="America/Los_Angeles">Los Angeles (PST/PDT)</option>
+                  <option value="America/Chicago">Chicago (CST/CDT)</option>
+                  <option value="America/Sao_Paulo">São Paulo (BRT)</option>
+                  <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+                  <option value="Africa/Johannesburg">Johannesburg (SAST)</option>
+                  <option value="Asia/Kolkata">New Delhi (IST)</option>
+                  <option value="Asia/Shanghai">Shanghai (CST)</option>
+                  <option value="Asia/Singapore">Singapore (SGT)</option>
+                </optgroup>
+              </select>
+              <div
+                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-on-surface-variant">
+                <span class="material-symbols-outlined">expand_more</span>
+              </div>
+            </div>
+
+            <button id="btn-add-worldclock"
+              class="w-full bg-gradient-to-br from-primary to-secondary-container text-on-primary py-4 rounded-full font-headline font-bold text-lg shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+              Add City
+            </button>
+          </div>
+        </section>
+
+        <!-- Active World Clocks List -->
+        <section class="flex flex-col gap-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-primary" data-icon="public">public</span>
+              <h3 class="text-xl font-headline font-semibold">Active Clocks</h3>
+            </div>
+            <span id="worldclock-count"
+              class="text-xs font-label text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full">0
+              ADDED</span>
+          </div>
+          <div id="worldclock-list-container"
+            class="flex flex-col gap-4 overflow-y-auto max-h-[400px] pr-2 scrollbar-hide">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- VIEW: ALARMS -->
+    <div id="view-alarms" class="w-full flex-col items-center hidden animate-[slideIn_0.3s_ease]">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+        <!-- Add Alarm Card -->
+        <section
+          class="bg-surface-container-low rounded-xl p-8 flex flex-col gap-8 shadow-inner border border-outline-variant/5">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-tertiary" data-icon="alarm_add">alarm_add</span>
+            <h3 class="text-xl font-headline font-semibold">New Alarm</h3>
+          </div>
+          <div class="flex flex-col gap-6">
+            <div class="flex items-center justify-center gap-4">
+              <div
+                class="bg-surface-container-lowest rounded-lg p-4 w-24 flex flex-col items-center border border-outline-variant/10">
+                <span class="text-xs font-label text-on-surface-variant uppercase mb-1">Hours</span>
+                <input id="alarm-hour"
+                  class="bg-transparent border-none text-4xl font-display text-center w-full focus:ring-0 p-0 text-on-surface outline-none placeholder-surface-variant"
+                  type="number" min="1" max="12" placeholder="07" />
+              </div>
+              <span class="text-4xl font-display text-outline-variant">:</span>
+              <div
+                class="bg-surface-container-lowest rounded-lg p-4 w-24 flex flex-col items-center border border-outline-variant/10">
+                <span class="text-xs font-label text-on-surface-variant uppercase mb-1">Mins</span>
+                <input id="alarm-minute"
+                  class="bg-transparent border-none text-4xl font-display text-center w-full focus:ring-0 p-0 text-on-surface outline-none placeholder-surface-variant"
+                  type="number" min="0" max="59" placeholder="30" />
+              </div>
+              <div class="flex flex-col gap-2">
+                <button id="btn-am"
+                  class="px-4 py-2 rounded-full bg-primary-container text-on-primary-container text-xs font-bold transition-all active-btn">AM</button>
+                <button id="btn-pm"
+                  class="px-4 py-2 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold transition-all">PM</button>
+              </div>
+            </div>
+
+            <button id="btn-set-alarm"
+              class="w-full bg-gradient-to-br from-primary to-secondary-container text-on-primary py-4 rounded-full font-headline font-bold text-lg shadow-lg shadow-primary/20 active:scale-95 transition-transform">
               Set Alarm
+            </button>
+          </div>
+        </section>
+
+        <!-- Active Alarms List -->
+        <section class="flex flex-col gap-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="material-symbols-outlined text-primary"
+                data-icon="notifications_active">notifications_active</span>
+              <h3 class="text-xl font-headline font-semibold">Active Alarms</h3>
+            </div>
+            <span id="active-count"
+              class="text-xs font-label text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full">0
+              ENABLED</span>
+          </div>
+          <div id="alarm-list-container" class="flex flex-col gap-4 overflow-y-auto max-h-[400px] pr-2 scrollbar-hide">
+            <!-- Rendered by JS -->
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- VIEW: TIMER -->
+    <div id="view-timer" class="w-full flex-col items-center hidden animate-[slideIn_0.3s_ease]">
+      <section
+        class="bg-surface-container-low rounded-xl p-8 flex flex-col gap-8 shadow-inner border border-outline-variant/5 w-full max-w-md mx-auto mt-4 text-center">
+
+        <div class="flex items-center gap-3 justify-center mb-4">
+          <span class="material-symbols-outlined text-tertiary" data-icon="hourglass_empty">hourglass_empty</span>
+          <h3 class="text-xl font-headline font-semibold">Countdown Timer</h3>
+        </div>
+
+        <!-- Timer Inputs & Display -->
+        <div id="timer-setup" class="flex items-center justify-center gap-4">
+          <div
+            class="bg-surface-container-lowest rounded-lg p-4 w-28 flex flex-col items-center border border-outline-variant/10">
+            <span class="text-xs font-label text-on-surface-variant uppercase mb-1">Mins</span>
+            <input id="timer-min-input"
+              class="bg-transparent border-none text-5xl font-display text-center w-full focus:ring-0 p-0 text-on-surface outline-none placeholder-surface-variant"
+              type="number" min="0" max="99" value="05" />
+          </div>
+          <span class="text-5xl font-display text-outline-variant">:</span>
+          <div
+            class="bg-surface-container-lowest rounded-lg p-4 w-28 flex flex-col items-center border border-outline-variant/10">
+            <span class="text-xs font-label text-on-surface-variant uppercase mb-1">Secs</span>
+            <input id="timer-sec-input"
+              class="bg-transparent border-none text-5xl font-display text-center w-full focus:ring-0 p-0 text-on-surface outline-none placeholder-surface-variant"
+              type="number" min="0" max="59" value="00" />
+          </div>
+        </div>
+
+        <div id="timer-running" class="hidden flex-col items-center justify-center my-6">
+          <h2 id="timer-display"
+            class="text-8xl font-display font-bold tracking-[-0.03em] text-on-surface drop-shadow-[0_0_40px_rgba(182,160,255,0.2)]">
+            05:00
+          </h2>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex w-full gap-4 mt-6">
+          <button id="btn-timer-reset"
+            class="flex-1 bg-surface-variant text-on-surface-variant py-4 rounded-full font-headline font-bold text-lg active:scale-95 transition-transform hover:bg-surface-container-highest flex justify-center items-center gap-2">
+            <span class="material-symbols-outlined" data-icon="restart_alt">restart_alt</span> Reset
+          </button>
+          <button id="btn-timer-play"
+            class="flex-1 bg-gradient-to-br from-primary to-secondary-container text-on-primary py-4 rounded-full font-headline font-bold text-lg shadow-lg shadow-primary/20 active:scale-95 transition-transform flex justify-center items-center gap-2">
+            <span id="timer-play-icon" class="material-symbols-outlined" data-icon="play_arrow">play_arrow</span>
+            <span id="timer-play-text">Start</span>
           </button>
         </div>
-      </section>
 
-      <!-- Active Alarms List -->
-      <section class="flex flex-col gap-6">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="material-symbols-outlined text-primary" data-icon="notifications_active">notifications_active</span>
-            <h3 class="text-xl font-headline font-semibold">Active Alarms</h3>
-          </div>
-          <span id="active-count" class="text-xs font-label text-on-surface-variant bg-surface-container-high px-3 py-1 rounded-full">0 ENABLED</span>
-        </div>
-        <div id="alarm-list-container" class="flex flex-col gap-4 overflow-y-auto max-h-[400px] pr-2 scrollbar-hide">
-          <!-- Rendered by JS -->
-        </div>
       </section>
+    </div>
+  </main>
+
+  <!-- BottomNavBar -->
+  <nav class="fixed bottom-0 left-0 w-full flex justify-center pb-8 z-50">
+    <div
+      class="bg-[#15052a]/80 backdrop-blur-xl fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full px-2 py-2 shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex justify-between items-center group-nav border border-outline-variant/20">
+
+      <button id="nav-clock"
+        class="nav-btn flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-[#b6a0ff] to-[#7c4dff] text-[#15052a] rounded-full py-2 shadow-lg shadow-[#7c4dff]/20 active:scale-95 transition-all duration-300 ease-out">
+        <span class="material-symbols-outlined" data-icon="schedule"
+          style="font-variation-settings: 'FILL' 1;">schedule</span>
+        <span class="font-['Inter'] text-[10px] uppercase tracking-widest mt-0.5 font-bold">Clock</span>
+      </button>
+
+      <button id="nav-worldclock"
+        class="nav-btn flex-1 flex flex-col items-center justify-center text-[#f0dfff]/60 py-2 hover:text-[#f0dfff] transition-all active:scale-95 duration-300 rounded-full">
+        <span class="material-symbols-outlined" data-icon="language">language</span>
+        <span class="font-['Inter'] text-[10px] uppercase tracking-widest mt-0.5">World</span>
+      </button>
+
+      <button id="nav-alarms"
+        class="nav-btn flex-1 flex flex-col items-center justify-center text-[#f0dfff]/60 py-2 hover:text-[#f0dfff] transition-all active:scale-95 duration-300 rounded-full">
+        <span class="material-symbols-outlined" data-icon="alarm">alarm</span>
+        <span class="font-['Inter'] text-[10px] uppercase tracking-widest mt-0.5">Alarms</span>
+      </button>
+
+      <button id="nav-timer"
+        class="nav-btn flex-1 flex flex-col items-center justify-center text-[#f0dfff]/60 py-2 hover:text-[#f0dfff] transition-all active:scale-95 duration-300 rounded-full">
+        <span class="material-symbols-outlined" data-icon="hourglass_empty">hourglass_empty</span>
+        <span class="font-['Inter'] text-[10px] uppercase tracking-widest mt-0.5">Timer</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Floating Background Aesthetics -->
+  <div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+    <div class="absolute top-[20%] left-[10%] w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
+    <div
+      class="absolute bottom-[20%] right-[10%] w-[500px] h-[500px] bg-secondary-container/10 rounded-full blur-[150px]">
+    </div>
+    <div class="absolute top-0 left-0 w-full h-full opacity-10"
+      style="background-image: radial-gradient(#806d98 0.5px, transparent 0.5px); background-size: 24px 24px;"></div>
+  </div>
+
+  <!-- Alarm Ringing Overlay -->
+  <div id="ringing-overlay">
+    <div
+      class="bg-surface-container rounded-xl p-8 flex flex-col items-center text-center max-w-sm w-[90%] shadow-[0_20px_40px_rgba(0,0,0,0.8)] border border-primary/20">
+      <span class="material-symbols-outlined text-6xl text-primary animate-pulse mb-4" data-icon="alarm">alarm</span>
+      <h2 id="ringing-title" class="text-3xl font-display font-bold text-on-surface mb-2">Wake up!</h2>
+      <p id="ringing-time" class="text-xl font-label text-on-surface-variant mb-8">00:00 AM</p>
+      <div class="flex w-full gap-3">
+        <button id="btn-snooze"
+          class="flex-1 px-4 py-3 rounded-full bg-surface-variant hover:bg-surface-container-highest text-on-surface-variant font-bold transition-all">Snooze</button>
+        <button id="btn-stop-alarm"
+          class="flex-1 px-4 py-3 rounded-full bg-error hover:bg-error-dim text-on-error font-bold transition-all shadow-lg shadow-error/20">Stop</button>
+      </div>
     </div>
   </div>
 
-  <!-- VIEW: TIMER -->
-  <div id="view-timer" class="w-full flex-col items-center hidden animate-[slideIn_0.3s_ease]">
-    <section class="bg-surface-container-low rounded-xl p-8 flex flex-col gap-8 shadow-inner border border-outline-variant/5 w-full max-w-md mx-auto mt-4 text-center">
-      
-      <div class="flex items-center gap-3 justify-center mb-4">
-        <span class="material-symbols-outlined text-tertiary" data-icon="hourglass_empty">hourglass_empty</span>
-        <h3 class="text-xl font-headline font-semibold">Countdown Timer</h3>
-      </div>
+  <!-- Audio Element -->
+  <audio id="alarm-sound" loop preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+  </audio>
 
-      <!-- Timer Inputs & Display -->
-      <div id="timer-setup" class="flex items-center justify-center gap-4">
-        <div class="bg-surface-container-lowest rounded-lg p-4 w-28 flex flex-col items-center border border-outline-variant/10">
-          <span class="text-xs font-label text-on-surface-variant uppercase mb-1">Mins</span>
-          <input id="timer-min-input" class="bg-transparent border-none text-5xl font-display text-center w-full focus:ring-0 p-0 text-on-surface outline-none placeholder-surface-variant" type="number" min="0" max="99" value="05"/>
-        </div>
-        <span class="text-5xl font-display text-outline-variant">:</span>
-        <div class="bg-surface-container-lowest rounded-lg p-4 w-28 flex flex-col items-center border border-outline-variant/10">
-          <span class="text-xs font-label text-on-surface-variant uppercase mb-1">Secs</span>
-          <input id="timer-sec-input" class="bg-transparent border-none text-5xl font-display text-center w-full focus:ring-0 p-0 text-on-surface outline-none placeholder-surface-variant" type="number" min="0" max="59" value="00"/>
-        </div>
-      </div>
+  <script src="script.js"></script>
 
-      <div id="timer-running" class="hidden flex-col items-center justify-center my-6">
-        <h2 id="timer-display" class="text-8xl font-display font-bold tracking-[-0.03em] text-on-surface drop-shadow-[0_0_40px_rgba(182,160,255,0.2)]">
-          05:00
-        </h2>
-      </div>
+  <style>
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
 
-      <!-- Action Buttons -->
-      <div class="flex w-full gap-4 mt-6">
-        <button id="btn-timer-reset" class="flex-1 bg-surface-variant text-on-surface-variant py-4 rounded-full font-headline font-bold text-lg active:scale-95 transition-transform hover:bg-surface-container-highest flex justify-center items-center gap-2">
-          <span class="material-symbols-outlined" data-icon="restart_alt">restart_alt</span> Reset
-        </button>
-        <button id="btn-timer-play" class="flex-1 bg-gradient-to-br from-primary to-secondary-container text-on-primary py-4 rounded-full font-headline font-bold text-lg shadow-lg shadow-primary/20 active:scale-95 transition-transform flex justify-center items-center gap-2">
-          <span id="timer-play-icon" class="material-symbols-outlined" data-icon="play_arrow">play_arrow</span>
-          <span id="timer-play-text">Start</span>
-        </button>
-      </div>
-
-    </section>
-  </div>
-</main>
-
-<!-- BottomNavBar -->
-<nav class="fixed bottom-0 left-0 w-full flex justify-center pb-8 z-50">
-  <div class="bg-[#15052a]/80 backdrop-blur-xl fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-full px-2 py-2 shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex justify-between items-center group-nav border border-outline-variant/20">
-    
-    <button id="nav-clock" class="nav-btn flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-[#b6a0ff] to-[#7c4dff] text-[#15052a] rounded-full py-2 shadow-lg shadow-[#7c4dff]/20 active:scale-95 transition-all duration-300 ease-out">
-      <span class="material-symbols-outlined" data-icon="schedule" style="font-variation-settings: 'FILL' 1;">schedule</span>
-      <span class="font-['Inter'] text-[10px] uppercase tracking-widest mt-0.5 font-bold">Clock</span>
-    </button>
-
-    <button id="nav-alarms" class="nav-btn flex-1 flex flex-col items-center justify-center text-[#f0dfff]/60 py-2 hover:text-[#f0dfff] transition-all active:scale-95 duration-300 rounded-full">
-      <span class="material-symbols-outlined" data-icon="alarm">alarm</span>
-      <span class="font-['Inter'] text-[10px] uppercase tracking-widest mt-0.5">Alarms</span>
-    </button>
-
-    <button id="nav-timer" class="nav-btn flex-1 flex flex-col items-center justify-center text-[#f0dfff]/60 py-2 hover:text-[#f0dfff] transition-all active:scale-95 duration-300 rounded-full">
-      <span class="material-symbols-outlined" data-icon="hourglass_empty">hourglass_empty</span>
-      <span class="font-['Inter'] text-[10px] uppercase tracking-widest mt-0.5">Timer</span>
-    </button>
-  </div>
-</nav>
-
-<!-- Floating Background Aesthetics -->
-<div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
-  <div class="absolute top-[20%] left-[10%] w-96 h-96 bg-primary/10 rounded-full blur-[120px]"></div>
-  <div class="absolute bottom-[20%] right-[10%] w-[500px] h-[500px] bg-secondary-container/10 rounded-full blur-[150px]"></div>
-  <div class="absolute top-0 left-0 w-full h-full opacity-10" style="background-image: radial-gradient(#806d98 0.5px, transparent 0.5px); background-size: 24px 24px;"></div>
-</div>
-
-<!-- Alarm Ringing Overlay -->
-<div id="ringing-overlay">
-  <div class="bg-surface-container rounded-xl p-8 flex flex-col items-center text-center max-w-sm w-[90%] shadow-[0_20px_40px_rgba(0,0,0,0.8)] border border-primary/20">
-    <span class="material-symbols-outlined text-6xl text-primary animate-pulse mb-4" data-icon="alarm">alarm</span>
-    <h2 id="ringing-title" class="text-3xl font-display font-bold text-on-surface mb-2">Wake up!</h2>
-    <p id="ringing-time" class="text-xl font-label text-on-surface-variant mb-8">00:00 AM</p>
-    <div class="flex w-full gap-3">
-      <button id="btn-snooze" class="flex-1 px-4 py-3 rounded-full bg-surface-variant hover:bg-surface-container-highest text-on-surface-variant font-bold transition-all">Snooze</button>
-      <button id="btn-stop-alarm" class="flex-1 px-4 py-3 rounded-full bg-error hover:bg-error-dim text-on-error font-bold transition-all shadow-lg shadow-error/20">Stop</button>
-    </div>
-  </div>
-</div>
-
-<!-- Audio Element -->
-<audio id="alarm-sound" loop preload="auto">
-  <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
-</audio>
-
-<script src="script.js"></script>
-
-<style>
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-</style>
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
 
 </body>
+
 </html>
