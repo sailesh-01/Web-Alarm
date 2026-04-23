@@ -1,26 +1,5 @@
 :root {
-  /* Light Theme Variables */
-  --bg-color: #f0f4f8;
-  --surface: #ffffff;
-  --on-surface: #1e293b;
-  --text-muted: #64748b;
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-active: #1d4ed8;
-  --secondary-bg: #e2e8f0;
-  --secondary-hover: #cbd5e1;
-  --danger: #ef4444;
-  --danger-hover: #dc2828;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --radius-md: 12px;
-  --radius-lg: 24px;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-[data-theme="dark"] {
-  /* Dark Theme Variables / MD3 Dark */
+  /* MD3 Dark Theme Variables (Static) */
   --bg-color: #0f172a;
   --surface: #1e293b;
   --on-surface: #f8fafc;
@@ -30,55 +9,18 @@
   --primary-active: #2563eb;
   --secondary-bg: #334155;
   --secondary-hover: #475569;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --radius-md: 12px;
+  --radius-lg: 24px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-}
-
-body {
-  font-family: 'Outfit', sans-serif;
-  background-color: var(--bg-color);
-  color: var(--on-surface);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: var(--transition);
-  padding: 20px;
-}
-
-/* Material Symbols Adjustments */
-.material-symbols-rounded {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-
-/* Theme Toggle Button */
-.theme-toggle {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  background: var(--surface);
-  border: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-  color: var(--on-surface);
-  transition: var(--transition);
-  z-index: 100;
-}
-.theme-toggle:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-lg);
 }
 
 /* Main Container */
@@ -351,4 +293,53 @@ h2, h3 {
 @media (max-width: 480px) {
   .time { font-size: 3.2rem; }
   .app-container { gap: 24px; }
+}
+
+/* Analog Clock Styles */
+.clock-analog-container {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hand-hour, .hand-minute, .hand-second {
+  transform-origin: bottom center;
+  transition: transform 0.5s cubic-bezier(0.1, 2.7, 0.58, 1);
+}
+
+.hand-second {
+  transition: transform 0.1s linear;
+}
+
+.marker {
+  position: absolute;
+  background: var(--on-surface-variant);
+  border-radius: 99px;
+  left: 50%;
+  top: 0;
+  transform-origin: 50% 140px; /* Adjust based on container size */
+}
+
+/* For mobile/smaller screens we might need to adjust transform-origin via JS or media queries */
+@media (max-width: 768px) {
+  .marker {
+    transform-origin: 50% 112px;
+  }
+}
+
+@media (min-width: 769px) {
+  .marker {
+    transform-origin: 50% 144px;
+  }
+}
+
+.marker-12 { top: 0; }
+.marker-3 { top: 50%; left: 100%; transform: translateY(-50%) translateX(-100%); }
+.marker-6 { top: 100%; left: 50%; transform: translateX(-50%) translateY(-100%); }
+.marker-9 { top: 50%; left: 0; transform: translateY(-50%); }
+
+/* Responsive adjustments for analog clock */
+@media (max-width: 480px) {
+  .clock-analog-container {
+    width: 240px;
+    height: 240px;
+  }
 }

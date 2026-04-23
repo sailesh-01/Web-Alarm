@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <title>Temporal Sanctuary - Digital Clock</title>
+  <title>ChronoSync - Digital Clock</title>
 
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link
@@ -102,26 +102,16 @@
       transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    html.light body {
-      background-color: #f0f4f8;
-      color: #1e293b;
+    /* Hide number input spin buttons */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
-    html.light .bg-\[\#15052a\]\/90 {
-      background-color: rgba(240, 244, 248, 0.9);
-    }
-
-    html.light .bg-\[\#1b0933\]\/50 {
-      background-color: rgba(203, 213, 225, 0.9);
-    }
-
-    html.light .from-\[\#1b0933\] {
-      --tw-gradient-from: #e2e8f0 var(--tw-gradient-from-position);
-    }
-
-    html.light .active-btn {
-      background-color: #3b82f6 !important;
-      color: white !important;
+    input[type=number] {
+      -moz-appearance: textfield;
+      appearance: textfield;
     }
 
     #ringing-overlay {
@@ -156,15 +146,11 @@
     class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-[#15052a]/90 backdrop-blur-md bg-gradient-to-b from-[#1b0933] to-transparent theme-header">
     <div class="flex items-center gap-2">
       <span class="material-symbols-outlined text-primary" data-icon="auto_awesome">auto_awesome</span>
-      <h1 class="font-headline text-2xl tracking-tight text-on-surface font-bold tracking-[-0.02em]">Temporal Sanctuary
+      <h1 class="font-headline text-2xl tracking-tight text-on-surface font-bold tracking-[-0.02em]">ChronoSync
       </h1>
     </div>
     <div class="flex items-center gap-4">
-      <button id="theme-toggle"
-        class="p-2 rounded-full hover:bg-surface-variant transition-colors active:scale-95 duration-200">
-        <span class="material-symbols-outlined text-on-surface/60" id="theme-icon"
-          data-icon="light_mode">light_mode</span>
-      </button>
+      <!-- Theme toggle removed -->
     </div>
   </header>
 
@@ -172,7 +158,14 @@
 
     <!-- VIEW: CLOCK -->
     <div id="view-clock" class="w-full flex-col items-center flex animate-[slideIn_0.3s_ease]">
-      <section class="flex flex-col items-center mb-24 relative mt-16 w-full">
+      <!-- Clock Mode Toggle -->
+      <div class="flex bg-surface-container-low p-1 rounded-full mb-8 border border-outline-variant/10">
+        <button id="btn-digital-mode" class="px-6 py-2 rounded-full text-sm font-label font-bold transition-all bg-primary text-on-primary shadow-lg shadow-primary/20">Digital</button>
+        <button id="btn-analog-mode" class="px-6 py-2 rounded-full text-sm font-label font-bold transition-all text-on-surface-variant hover:text-on-surface">Analog</button>
+      </div>
+
+      <!-- Digital View -->
+      <section id="digital-clock" class="flex flex-col items-center mb-24 relative mt-8 w-full">
         <div class="absolute -top-12 opacity-5 pointer-events-none select-none">
           <span class="text-[12rem] font-display font-bold text-surface-tint tracking-tighter">TIME</span>
         </div>
@@ -188,6 +181,33 @@
             <span id="date" class="text-xl font-label text-on-surface-variant font-medium">--</span>
             <div class="h-1 w-24 bg-primary-container rounded-full mt-2 opacity-30"></div>
           </div>
+        </div>
+      </section>
+
+      <!-- Analog View -->
+      <section id="analog-clock" class="hidden flex-col items-center mb-24 relative mt-8 w-full">
+        <div class="clock-analog-container relative w-64 h-64 md:w-80 md:h-80 rounded-full flex items-center justify-center">
+          <!-- Glassmorphism Clock Face -->
+          <div class="absolute inset-0 rounded-full bg-surface-container-low/40 backdrop-blur-xl border border-primary/20 shadow-[0_0_50px_rgba(182,160,255,0.1)]"></div>
+          
+          <!-- Markers -->
+          <div class="absolute inset-0 p-4">
+            <div class="relative w-full h-full">
+              <!-- JS will populate markers -->
+            </div>
+          </div>
+
+          <!-- Hands -->
+          <div id="analog-hour" class="hand-hour absolute w-1.5 h-20 md:h-24 bg-primary rounded-full origin-bottom bottom-1/2 left-1/2 -translate-x-1/2 shadow-[0_0_15px_rgba(182,160,255,0.6)]"></div>
+          <div id="analog-minute" class="hand-minute absolute w-1 h-28 md:h-32 bg-secondary rounded-full origin-bottom bottom-1/2 left-1/2 -translate-x-1/2 shadow-[0_0_15px_rgba(188,141,249,0.6)]"></div>
+          <div id="analog-second" class="hand-second absolute w-0.5 h-32 md:h-36 bg-tertiary rounded-full origin-bottom bottom-1/2 left-1/2 -translate-x-1/2 shadow-[0_0_10px_rgba(255,150,187,0.8)]"></div>
+          
+          <!-- Center Point -->
+          <div class="absolute w-3 h-3 bg-on-surface rounded-full z-10 shadow-[0_0_10px_rgba(240,223,255,0.8)]"></div>
+        </div>
+        <div class="mt-8 flex flex-col items-center">
+          <span id="analog-date" class="text-xl font-label text-on-surface-variant font-medium">--</span>
+          <div class="h-1 w-24 bg-primary-container rounded-full mt-2 opacity-30"></div>
         </div>
       </section>
     </div>
@@ -208,22 +228,52 @@
               <select id="worldclock-timezone"
                 class="w-full appearance-none bg-surface-container border border-outline-variant/20 rounded-lg py-4 px-4 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer font-label text-base">
                 <optgroup label="Popular">
-                  <option value="America/New_York">New York (EST/EDT)</option>
-                  <option value="Europe/London">London (GMT/BST)</option>
-                  <option value="Europe/Paris">Paris (CET/CEST)</option>
-                  <option value="Asia/Dubai">Dubai (GST)</option>
-                  <option value="Asia/Tokyo">Tokyo (JST)</option>
-                  <option value="Australia/Sydney">Sydney (AEST/AEDT)</option>
+                  <option value="America/New_York">New York, USA (EST/EDT)</option>
+                  <option value="Europe/London">London, UK (GMT/BST)</option>
+                  <option value="Europe/Paris">Paris, France (CET/CEST)</option>
+                  <option value="Asia/Dubai">Dubai, UAE (GST)</option>
+                  <option value="Asia/Tokyo">Tokyo, Japan (JST)</option>
+                  <option value="Australia/Sydney">Sydney, Australia (AEST/AEDT)</option>
                 </optgroup>
-                <optgroup label="Other">
-                  <option value="America/Los_Angeles">Los Angeles (PST/PDT)</option>
-                  <option value="America/Chicago">Chicago (CST/CDT)</option>
-                  <option value="America/Sao_Paulo">São Paulo (BRT)</option>
-                  <option value="Europe/Berlin">Berlin (CET/CEST)</option>
-                  <option value="Africa/Johannesburg">Johannesburg (SAST)</option>
-                  <option value="Asia/Kolkata">New Delhi (IST)</option>
-                  <option value="Asia/Shanghai">Shanghai (CST)</option>
+                <optgroup label="Americas">
+                  <option value="America/Los_Angeles">Los Angeles, USA (PST/PDT)</option>
+                  <option value="America/Denver">Denver, USA (MST/MDT)</option>
+                  <option value="America/Chicago">Chicago, USA (CST/CDT)</option>
+                  <option value="America/Toronto">Toronto, Canada (EST/EDT)</option>
+                  <option value="America/Vancouver">Vancouver, Canada (PST/PDT)</option>
+                  <option value="America/Mexico_City">Mexico City, Mexico (CST/CDT)</option>
+                  <option value="America/Sao_Paulo">São Paulo, Brazil (BRT)</option>
+                  <option value="America/Buenos_Aires">Buenos Aires, Argentina (ART)</option>
+                </optgroup>
+                <optgroup label="Europe">
+                  <option value="Europe/Berlin">Berlin, Germany (CET/CEST)</option>
+                  <option value="Europe/Rome">Rome, Italy (CET/CEST)</option>
+                  <option value="Europe/Madrid">Madrid, Spain (CET/CEST)</option>
+                  <option value="Europe/Moscow">Moscow, Russia (MSK)</option>
+                  <option value="Europe/Istanbul">Istanbul, Turkey (TRT)</option>
+                  <option value="Europe/Amsterdam">Amsterdam, Netherlands (CET/CEST)</option>
+                </optgroup>
+                <optgroup label="Asia">
+                  <option value="Asia/Kolkata">New Delhi, India (IST)</option>
+                  <option value="Asia/Shanghai">Shanghai, China (CST)</option>
                   <option value="Asia/Singapore">Singapore (SGT)</option>
+                  <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
+                  <option value="Asia/Seoul">Seoul, South Korea (KST)</option>
+                  <option value="Asia/Bangkok">Bangkok, Thailand (ICT)</option>
+                  <option value="Asia/Jakarta">Jakarta, Indonesia (WIB)</option>
+                  <option value="Asia/Riyadh">Riyadh, Saudi Arabia (AST)</option>
+                  <option value="Asia/Tehran">Tehran, Iran (IRST)</option>
+                </optgroup>
+                <optgroup label="Africa & Middle East">
+                  <option value="Africa/Cairo">Cairo, Egypt (EET)</option>
+                  <option value="Africa/Johannesburg">Johannesburg, South Africa (SAST)</option>
+                  <option value="Africa/Nairobi">Nairobi, Kenya (EAT)</option>
+                  <option value="Africa/Lagos">Lagos, Nigeria (WAT)</option>
+                </optgroup>
+                <optgroup label="Pacific">
+                  <option value="Pacific/Auckland">Auckland, New Zealand (NZST/NZDT)</option>
+                  <option value="Pacific/Honolulu">Honolulu, Hawaii (HST)</option>
+                  <option value="Pacific/Fiji">Fiji (FJT)</option>
                 </optgroup>
               </select>
               <div

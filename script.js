@@ -13,6 +13,16 @@ const viewTimer = document.getElementById('view-timer');
 const timeDisplay = document.getElementById('time');
 const ampmDisplay = document.getElementById('ampm');
 const dateDisplay = document.getElementById('date');
+const analogDateDisplay = document.getElementById('analog-date');
+
+const btnDigitalMode = document.getElementById('btn-digital-mode');
+const btnAnalogMode = document.getElementById('btn-analog-mode');
+const digitalClockView = document.getElementById('digital-clock');
+const analogClockView = document.getElementById('analog-clock');
+
+const handHour = document.getElementById('analog-hour');
+const handMinute = document.getElementById('analog-minute');
+const handSecond = document.getElementById('analog-second');
 
 // DOM Elements: World Clock
 const btnAddWorldClock = document.getElementById('btn-add-worldclock');
@@ -43,9 +53,6 @@ const timerPlayIcon = document.getElementById('timer-play-icon');
 const timerPlayText = document.getElementById('timer-play-text');
 
 // Generics / Modals
-const themeToggleBtn = document.getElementById('theme-toggle');
-const themeIcon = document.getElementById('theme-icon');
-
 const ringingOverlay = document.getElementById('ringing-overlay');
 const ringingTitle = document.getElementById('ringing-title');
 const ringingTimeTxt = document.getElementById('ringing-time');
@@ -58,6 +65,7 @@ let alarms = JSON.parse(localStorage.getItem('alarms')) || [];
 let worldClocks = JSON.parse(localStorage.getItem('worldClocks')) || [];
 let activeRingingAlarmId = null;
 let selectedPeriod = 'AM';
+let clockMode = localStorage.getItem('clockMode') || 'digital';
 
 // Timer States
 let timerInterval = null;
@@ -66,12 +74,99 @@ let isTimerRunning = false;
 
 // -------------- INIT --------------
 function init() {
-  loadThemePreference();
+  loadClockModePreference();
   setInterval(updateClock, 1000);
   updateClock();
   renderAlarms();
   renderWorldClocks();
   setupNavigation();
+  setupInputUX();
+  setupClockToggle();
+}
+
+function loadClockModePreference() {
+  if (clockMode === 'analog') {
+    switchToAnalog();
+  } else {
+    switchToDigital();
+  }
+}
+
+function setupClockToggle() {
+  btnDigitalMode.addEventListener('click', switchToDigital);
+  btnAnalogMode.addEventListener('click', switchToAnalog);
+  generateMarkers();
+}
+
+function generateMarkers() {
+  const markerContainer = document.querySelector('.clock-analog-container .relative');
+  if (!markerContainer) return;
+  
+  // Clear existing hardcoded markers if any
+  markerContainer.innerHTML = '';
+  
+  for (let i = 1; i <= 12; i++) {
+    const marker = document.createElement('div');
+    marker.className = 'marker';
+    const angle = i * 30;
+    marker.style.transform = `rotate(${angle}deg)`;
+    marker.style.height = i % 3 === 0 ? '12px' : '6px';
+    marker.style.width = i % 3 === 0 ? '3px' : '1.5px';
+    marker.style.opacity = i % 3 === 0 ? '0.8' : '0.4';
+    markerContainer.appendChild(marker);
+  }
+}
+
+function switchToDigital() {
+  clockMode = 'digital';
+  localStorage.setItem('clockMode', 'digital');
+  
+  digitalClockView.classList.remove('hidden');
+  digitalClockView.classList.add('flex');
+  analogClockView.classList.add('hidden');
+  analogClockView.classList.remove('flex');
+
+  btnDigitalMode.className = 'px-6 py-2 rounded-full text-sm font-label font-bold transition-all bg-primary text-on-primary shadow-lg shadow-primary/20';
+  btnAnalogMode.className = 'px-6 py-2 rounded-full text-sm font-label font-bold transition-all text-on-surface-variant hover:text-on-surface';
+}
+
+function switchToAnalog() {
+  clockMode = 'analog';
+  localStorage.setItem('clockMode', 'analog');
+
+  analogClockView.classList.remove('hidden');
+  analogClockView.classList.add('flex');
+  digitalClockView.classList.add('hidden');
+  digitalClockView.classList.remove('flex');
+
+  btnAnalogMode.className = 'px-6 py-2 rounded-full text-sm font-label font-bold transition-all bg-primary text-on-primary shadow-lg shadow-primary/20';
+  btnDigitalMode.className = 'px-6 py-2 rounded-full text-sm font-label font-bold transition-all text-on-surface-variant hover:text-on-surface';
+}
+
+// -------------- INPUT UX --------------
+function setupInputUX() {
+  const timeInputs = [hourInput, minuteInput, timerMinInput, timerSecInput];
+  timeInputs.forEach(inp => {
+    if (!inp) return;
+    inp.addEventListener('focus', function () {
+      this.select();
+    });
+    inp.addEventListener('input', function () {
+      if (this.value.length > 2) {
+        this.value = this.value.slice(-2);
+      }
+    });
+    inp.addEventListener('blur', function () {
+      let max = parseInt(this.getAttribute('max'));
+      let min = parseInt(this.getAttribute('min')) || 0;
+      let val = parseInt(this.value);
+      if (!isNaN(val)) {
+        if (!isNaN(max) && val > max) val = max;
+        if (val < min) val = min;
+        this.value = val.toString().padStart(2, '0');
+      }
+    });
+  });
 }
 
 // -------------- NAVIGATION --------------
@@ -131,21 +226,32 @@ function updateClock() {
   const now = new Date();
 
   const options = { weekday: 'long', month: 'long', day: 'numeric' };
-  dateDisplay.textContent = now.toLocaleDateString('en-US', options).toUpperCase();
+  const dateStr = now.toLocaleDateString('en-US', options).toUpperCase();
+  dateDisplay.textContent = dateStr;
+  analogDateDisplay.textContent = dateStr;
 
   let hours = now.getHours();
   let minutes = now.getMinutes();
   let seconds = now.getSeconds();
   let ampm = hours >= 12 ? 'PM' : 'AM';
 
-  hours = hours % 12 || 12;
-
-  const formattedHours = hours.toString().padStart(2, '0');
+  // Digital Update
+  let displayHours = hours % 12 || 12;
+  const formattedHours = displayHours.toString().padStart(2, '0');
   const formattedMinutes = minutes.toString().padStart(2, '0');
   const formattedSeconds = seconds.toString().padStart(2, '0');
 
   timeDisplay.textContent = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
   ampmDisplay.textContent = ampm;
+
+  // Analog Update
+  const secondsDegrees = (seconds / 60) * 360;
+  const minutesDegrees = ((minutes / 60) * 360) + ((seconds / 60) * 6);
+  const hoursDegrees = ((hours / 12) * 360) + ((minutes / 60) * 30);
+
+  handSecond.style.transform = `translateX(-50%) rotate(${secondsDegrees}deg)`;
+  handMinute.style.transform = `translateX(-50%) rotate(${minutesDegrees}deg)`;
+  handHour.style.transform = `translateX(-50%) rotate(${hoursDegrees}deg)`;
 
   // Trigger precisely at the minute mark
   if (seconds === 0) {
@@ -487,29 +593,6 @@ function updateTimerDisplay() {
 // Global UI Handles
 btnStopAlarm.addEventListener('click', stopAlarm);
 btnSnooze.addEventListener('click', snoozeAlarm);
-
-// Theme Toggle
-function loadThemePreference() {
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  if (savedTheme === 'light') {
-    document.documentElement.classList.add('light'); document.documentElement.classList.remove('dark');
-    themeIcon.textContent = 'dark_mode';
-  } else {
-    document.documentElement.classList.add('dark'); document.documentElement.classList.remove('light');
-    themeIcon.textContent = 'light_mode';
-  }
-}
-
-themeToggleBtn.addEventListener('click', () => {
-  const isDark = document.documentElement.classList.contains('dark');
-  if (isDark) {
-    document.documentElement.classList.remove('dark'); document.documentElement.classList.add('light');
-    localStorage.setItem('theme', 'light'); themeIcon.textContent = 'dark_mode';
-  } else {
-    document.documentElement.classList.add('dark'); document.documentElement.classList.remove('light');
-    localStorage.setItem('theme', 'dark'); themeIcon.textContent = 'light_mode';
-  }
-});
 
 // Fire up
 init();
