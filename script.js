@@ -2,14 +2,19 @@
 const timeDisplay = document.getElementById('time');
 const ampmDisplay = document.getElementById('ampm');
 const dateDisplay = document.getElementById('date');
-const hourSelect = document.getElementById('alarm-hour');
-const minuteSelect = document.getElementById('alarm-minute');
-const ampmSelect = document.getElementById('alarm-ampm');
+
+const hourInput = document.getElementById('alarm-hour');
+const minuteInput = document.getElementById('alarm-minute');
+const btnAm = document.getElementById('btn-am');
+const btnPm = document.getElementById('btn-pm');
+
 const btnSetAlarm = document.getElementById('btn-set-alarm');
-const alarmListContainer = document.getElementById('alarm-list');
+const alarmListContainer = document.getElementById('alarm-list-container');
+const activeCountTxt = document.getElementById('active-count');
+
 const themeToggleBtn = document.getElementById('theme-toggle');
-const darkIcon = document.querySelector('.dark-icon');
-const lightIcon = document.querySelector('.light-icon');
+const themeIcon = document.getElementById('theme-icon');
+
 const ringingOverlay = document.getElementById('ringing-overlay');
 const ringingTimeTxt = document.getElementById('ringing-time');
 const btnStopAlarm = document.getElementById('btn-stop-alarm');
@@ -19,37 +24,40 @@ const alarmSound = document.getElementById('alarm-sound');
 // App State
 let alarms = JSON.parse(localStorage.getItem('alarms')) || [];
 let activeRingingAlarmId = null;
+let selectedPeriod = 'AM';
 
 // Initialization
 function init() {
-  populateSelectOptions();
   loadThemePreference();
   setInterval(updateClock, 1000);
-  updateClock(); // Initial call to avoid 1sec delay
+  updateClock();
   renderAlarms();
 }
 
-// Populate Hour and Minute Dropdowns
-function populateSelectOptions() {
-  // Hours (1 to 12)
-  for (let i = 1; i <= 12; i++) {
-    const formattedVal = i.toString().padStart(2, '0');
-    hourSelect.options.add(new Option(formattedVal, formattedVal));
-  }
-  // Minutes (00 to 59)
-  for (let i = 0; i < 60; i++) {
-    const formattedVal = i.toString().padStart(2, '0');
-    minuteSelect.options.add(new Option(formattedVal, formattedVal));
-  }
-}
+// Period Toggle
+btnAm.addEventListener('click', () => {
+  selectedPeriod = 'AM';
+  btnAm.classList.remove('bg-surface-container', 'text-on-surface-variant');
+  btnAm.classList.add('bg-primary-container', 'text-on-primary-container');
+  btnPm.classList.remove('bg-primary-container', 'text-on-primary-container');
+  btnPm.classList.add('bg-surface-container', 'text-on-surface-variant');
+});
+
+btnPm.addEventListener('click', () => {
+  selectedPeriod = 'PM';
+  btnPm.classList.remove('bg-surface-container', 'text-on-surface-variant');
+  btnPm.classList.add('bg-primary-container', 'text-on-primary-container');
+  btnAm.classList.remove('bg-primary-container', 'text-on-primary-container');
+  btnAm.classList.add('bg-surface-container', 'text-on-surface-variant');
+});
 
 // Update the Clock Real-Time
 function updateClock() {
   const now = new Date();
   
-  // Format Date
-  const options = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
-  dateDisplay.textContent = now.toLocaleDateString('en-US', options);
+  // Format Date (WEDNESDAY, OCTOBER 25)
+  const options = { weekday: 'long', month: 'long', day: 'numeric' };
+  dateDisplay.textContent = now.toLocaleDateString('en-US', options).toUpperCase();
 
   // Format Time
   let hours = now.getHours();
@@ -60,23 +68,21 @@ function updateClock() {
   // Convert to 12-hour format
   hours = hours % 12 || 12;
 
-  // Add leading zeros
   const formattedHours = hours.toString().padStart(2, '0');
   const formattedMinutes = minutes.toString().padStart(2, '0');
   const formattedSeconds = seconds.toString().padStart(2, '0');
 
-  // Inject into DOM
   timeDisplay.textContent = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
   ampmDisplay.textContent = ampm;
 
-  // Check Alarms
-  checkAlarms(`${formattedHours}:${formattedMinutes}`, ampm, now.getSeconds());
+  // Check Alarms exactly on round seconds
+  if(seconds === 0) {
+    checkAlarms(`${formattedHours}:${formattedMinutes}`, ampm);
+  }
 }
 
-// Ensure alarm triggers only exactly once at second 0
-function checkAlarms(currentTimeString, currentAMPM, currentSeconds) {
-  if (currentSeconds !== 0) return; // Only trigger exact match at the start of the minute
-
+// Check if current time matches
+function checkAlarms(currentTimeString, currentAMPM) {
   alarms.forEach(alarm => {
     if (alarm.isActive && alarm.time === currentTimeString && alarm.ampm === currentAMPM) {
       triggerAlarm(alarm);
@@ -98,13 +104,12 @@ function triggerAlarm(alarm) {
   }
 }
 
-// Stop the currently ringing alarm
+// Stop Ringing Alarm
 function stopAlarm() {
   ringingOverlay.classList.remove('active');
   alarmSound.pause();
   alarmSound.currentTime = 0;
   
-  // Inactivate the alarm so it doesn't trigger again immediately
   if (activeRingingAlarmId) {
     alarms = alarms.map(alarm => {
       if (alarm.id === activeRingingAlarmId) {
@@ -133,7 +138,6 @@ function snoozeAlarm() {
       mm -= 60;
       hh += 1;
       if (hh === 12) {
-        // AM PM flip
         ampm = ampm === 'AM' ? 'PM' : 'AM';
       }
       if (hh > 12) {
@@ -161,19 +165,23 @@ function snoozeAlarm() {
 
 // Add New Alarm
 btnSetAlarm.addEventListener('click', () => {
-  const h = hourSelect.value;
-  const m = minuteSelect.value;
-  const period = ampmSelect.value;
+  let h = parseInt(hourInput.value);
+  let m = parseInt(minuteInput.value);
 
-  if (!h || !m) {
-    alert("Please select both hour and minute to set an alarm.");
+  if (isNaN(h) || isNaN(m)) {
+    alert("Please enter valid hour and minute.");
     return;
   }
-
-  const timeString = `${h}:${m}`;
   
-  // Avoid duplicate alarms conceptually
-  if (alarms.some(a => a.time === timeString && a.ampm === period)) {
+  if (h < 1 || h > 12) { alert("Hour must be between 1 and 12"); return; }
+  if (m < 0 || m > 59) { alert("Minute must be between 0 and 59"); return; }
+
+  const formattedH = h.toString().padStart(2, '0');
+  const formattedM = m.toString().padStart(2, '0');
+  const timeString = `${formattedH}:${formattedM}`;
+  
+  // Avoid duplicate alarms
+  if (alarms.some(a => a.time === timeString && a.ampm === selectedPeriod)) {
     alert("This alarm is already set.");
     return;
   }
@@ -181,56 +189,80 @@ btnSetAlarm.addEventListener('click', () => {
   const newAlarm = {
     id: Date.now().toString(),
     time: timeString,
-    ampm: period,
+    ampm: selectedPeriod,
     isActive: true
   };
 
   alarms.push(newAlarm);
   
-  // Reset fields loosely
-  hourSelect.value = '';
-  minuteSelect.value = '';
+  // Reset input fields
+  hourInput.value = '';
+  minuteInput.value = '';
 
   saveAlarms();
   renderAlarms();
 });
 
-// Render the Alarm List in DOM
+// Render Alarms using the Stitch HTML template blocks
 function renderAlarms() {
   alarmListContainer.innerHTML = '';
+  
+  let activeAlarms = alarms.filter(a => a.isActive).length;
+  activeCountTxt.textContent = `${activeAlarms} ENABLED`;
 
   if (alarms.length === 0) {
-    alarmListContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.9rem;">No alarms active.</p>';
+    alarmListContainer.innerHTML = '<p class="text-on-surface-variant font-body">No alarms set. Add one above!</p>';
     return;
   }
 
-  // Sort alarms chronologically (roughly)
+  // Sort strictly by AM/PM then Time
   const sortedAlarms = [...alarms].sort((a, b) => {
     let aVal = (a.ampm === 'PM' ? 1200 : 0) + (parseInt(a.time.substring(0, 2)) % 12) * 100 + parseInt(a.time.substring(3, 5));
     let bVal = (b.ampm === 'PM' ? 1200 : 0) + (parseInt(b.time.substring(0, 2)) % 12) * 100 + parseInt(b.time.substring(3, 5));
     return aVal - bVal;
   });
 
-  sortedAlarms.forEach(alarm => {
-    const alarmDiv = document.createElement('div');
-    alarmDiv.className = 'alarm-item';
-    alarmDiv.style.opacity = alarm.isActive ? '1' : '0.5';
-
-    alarmDiv.innerHTML = `
-      <div class="alarm-item-time">
-        ${alarm.time} <span>${alarm.ampm}</span>
-        ${alarm.isSnoozed ? '<span style="font-size: 0.75rem; background: var(--secondary-bg); padding: 2px 6px; border-radius: 4px; margin-left:8px; color:var(--on-surface)">Snoozed</span>' : ''}
+  sortedAlarms.forEach((alarm) => {
+    // Recreate the Stitch DOM structure for the alarm item
+    const div = document.createElement('div');
+    const bgClass = alarm.isActive ? 'bg-surface-container' : 'bg-[#1b0933] opacity-60'; // visually distinguish
+    div.className = `group ${bgClass} rounded-lg p-6 flex items-center justify-between hover:bg-secondary-container transition-all border border-outline-variant/10 cursor-pointer`;
+    
+    div.innerHTML = `
+      <div class="flex flex-col">
+        <div class="flex items-baseline gap-2">
+          <span class="text-3xl font-display font-medium text-on-surface" style="color: ${alarm.isActive ? 'inherit' : '#806d98'}">${alarm.time}</span>
+          <span class="text-xs font-label text-on-surface-variant uppercase">${alarm.ampm}</span>
+          ${alarm.isSnoozed ? `<span class="bg-secondary-container text-xs px-2 py-1 rounded ml-2 text-on-surface">Snoozed</span>` : ''}
+        </div>
+        <span class="text-xs font-label text-on-surface-variant mt-1 group-hover:text-on-secondary-container transition-colors">${alarm.isActive ? 'Active' : 'Disabled'} • ${alarm.ampm === 'AM' ? 'Morning' : 'Evening'}</span>
       </div>
-      <button class="btn-clear" onclick="deleteAlarm('${alarm.id}')" aria-label="Delete alarm">
-        <span class="material-symbols-rounded">delete</span>
-      </button>
+      <div class="flex items-center gap-4">
+        <!-- Toggle Pill purely cosmetic for visual -->
+        <div class="w-12 h-6 ${alarm.isActive ? 'bg-primary' : 'bg-surface-variant'} rounded-full relative p-1 flex items-center ${alarm.isActive ? 'justify-end' : 'justify-start'} cursor-pointer" onclick="toggleActive('${alarm.id}')">
+          <div class="w-4 h-4 ${alarm.isActive ? 'bg-on-primary' : 'bg-on-surface-variant'} rounded-full shadow-sm"></div>
+        </div>
+        <button onclick="deleteAlarm('${alarm.id}')" class="p-2 rounded-full text-error opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error-container/20">
+          <span class="material-symbols-outlined" data-icon="delete">delete</span>
+        </button>
+      </div>
     `;
-
-    alarmListContainer.appendChild(alarmDiv);
+    alarmListContainer.appendChild(div);
   });
 }
 
-// Delete Alarm - globally accessible for inline onclick
+// Interactivity mappings for toggles and deletes
+window.toggleActive = function(id) {
+  alarms = alarms.map(a => {
+    if(a.id === id) {
+      return { ...a, isActive: !a.isActive };
+    }
+    return a;
+  });
+  saveAlarms();
+  renderAlarms();
+}
+
 window.deleteAlarm = function(id) {
   alarms = alarms.filter(alarm => alarm.id !== id);
   saveAlarms();
@@ -241,41 +273,38 @@ function saveAlarms() {
   localStorage.setItem('alarms', JSON.stringify(alarms));
 }
 
-// Interactions for Overlays
+// Interactions for overlays
 btnStopAlarm.addEventListener('click', stopAlarm);
 btnSnooze.addEventListener('click', snoozeAlarm);
 
-// Theme Toggling functionality
+// Theme Toggling Functionality
 function loadThemePreference() {
-  const savedTheme = localStorage.getItem('theme');
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
-  if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    lightIcon.style.display = 'block';
-    darkIcon.style.display = 'none';
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
+    themeIcon.textContent = 'dark_mode';
   } else {
-    document.documentElement.setAttribute('data-theme', 'light');
-    darkIcon.style.display = 'block';
-    lightIcon.style.display = 'none';
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
+    themeIcon.textContent = 'light_mode';
   }
 }
 
 themeToggleBtn.addEventListener('click', () => {
-  const currentTheme = document.documentElement.getAttribute('data-theme');
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  
-  document.documentElement.setAttribute('data-theme', newTheme);
-  localStorage.setItem('theme', newTheme);
-  
-  if (newTheme === 'dark') {
-    lightIcon.style.display = 'block';
-    darkIcon.style.display = 'none';
+  const isDark = document.documentElement.classList.contains('dark');
+  if (isDark) {
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
+    localStorage.setItem('theme', 'light');
+    themeIcon.textContent = 'dark_mode';
   } else {
-    darkIcon.style.display = 'block';
-    lightIcon.style.display = 'none';
+    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('light');
+    localStorage.setItem('theme', 'dark');
+    themeIcon.textContent = 'light_mode';
   }
 });
 
-// Run Init
+// Init
 init();
